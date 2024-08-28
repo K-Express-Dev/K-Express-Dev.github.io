@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { auth, db } from './firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import ManagePopup from './ManagePopUp';
+import ManagePopup from './ManagePopup';
 import './Profile.css';
 
 function Profile() {
