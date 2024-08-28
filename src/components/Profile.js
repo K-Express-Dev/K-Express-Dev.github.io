@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { auth, db } from './firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import ManagePopup from './ManagePopUp';
 import './Profile.css';
 
 function Profile() {
@@ -15,6 +16,7 @@ function Profile() {
   });
   const [sellerRequest, setSellerRequest] = useState(false);
   const [isSeller, setIsSeller] = useState(false);
+  const [showManagePopup, setShowManagePopup] = useState(false); // State to control popup visibility
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
@@ -36,7 +38,6 @@ function Profile() {
       }
       setLoading(false);
     });
-
     return () => unsubscribe();
   }, []);
 
@@ -67,6 +68,14 @@ function Profile() {
       console.error('Error requesting seller status:', error);
     }
     setLoading(false);
+  };
+
+  const handleManageClick = () => {
+    setShowManagePopup(true);
+  };
+
+  const handleClosePopup = () => {
+    setShowManagePopup(false);
   };
 
   if (loading) {
@@ -137,10 +146,11 @@ function Profile() {
             <button onClick={handleSellerRequest} className="seller-request-button">Request to be a Seller</button>
           )}
           {sellerRequest && !isSeller && <p>Your request to be a seller has been submitted and awaits approval.</p>}
-          {isSeller && sellerRequest && <button className="manage-button">Manage</button>}
+          {isSeller && sellerRequest && <button onClick={handleManageClick} className="manage-button">Manage</button>}
           <button onClick={() => setEditing(true)} className="edit-button">Edit Profile</button>
         </div>
       )}
+      {showManagePopup && <ManagePopup onClose={handleClosePopup} />}
     </div>
   );
 }
