@@ -1,4 +1,8 @@
 const express = require('express');
+const app = express();
+const admin = require('firebase-admin');
+const db = admin.firestore();
+
 const cors = require('cors');
 const dotenv = require('dotenv');
 const { OAuth2Client } = require('google-auth-library');
@@ -6,9 +10,44 @@ const stripe = require('stripe'); // Import stripe module
 
 dotenv.config();
 
-const app = express();
 const stripeClient = stripe(process.env.STRIPE_SECRET_KEY); // Initialize stripe with secret key from environment variables
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+// API endpoint to get seller data
+app.get('/api/sellers/:id', async (req, res) => {
+  try {
+    const sellerId = req.params.id;
+    const sellerDoc = await db.collection('sellers').doc(sellerId).get();
+    
+    if (!sellerDoc.exists) {
+      return res.status(404).json({ error: 'Seller not found' });
+    }
+    
+    const sellerData = sellerDoc.data();
+    res.json(sellerData);
+  } catch (error) {
+    console.error('Error fetching seller data:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// API endpoint to get seller's dishes
+app.get('/api/sellers/:id/dishes', async (req, res) => {
+  try {
+    const sellerId = req.params.id;
+    const dishesSnapshot = await db.collection('sellers').doc(sellerId).collection('dishes').get();
+    
+    const dishes = [];
+    dishesSnapshot.forEach(doc => {
+      dishes.push({ id: doc.id, ...doc.data() });
+    });
+    
+    res.json(dishes);
+  } catch (error) {
+    console.error('Error fetching seller dishes:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
 app.use(cors());
 app.use(express.json());

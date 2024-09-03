@@ -1,76 +1,34 @@
 import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { FaStar, FaCheck, FaHeart, FaComment, FaShare } from 'react-icons/fa';
 import './SellerPage.css';
-import octoingred from './images/octo_ingred.jpeg'
-import khotpot from './images/four_packed.jpeg'
-import spicyOctopusImage from './images/spicy_octopus.jpeg';
 
 const SellerPage = ({ addToCart }) => {
+  const [seller, setSeller] = useState(null);
+  const [popularDishes, setPopularDishes] = useState([]);
   const [selectedDish, setSelectedDish] = useState(null);
+  const { id } = useParams();
 
-  const seller = {
-    name: "Irvine Dining",
-    image: spicyOctopusImage,
-    rating: 4.9,
-    reviewCount: 313,
-    mealsPrepared: 997,
-    certifications: ["Food safety"],
-    description: "",
-    cuisineTypes: ["Organic", "Korean", "Stews", "Vegetarian", "Comfort"],
+  useEffect(() => {
+    // Fetch seller data based on id
+    fetchSellerData(id);
+    // Fetch popular dishes for this seller
+    fetchPopularDishes(id);
+  }, [id]);
+
+  const fetchSellerData = async (sellerId) => {
+    // Replace this with actual API call to your backend
+    const response = await fetch(`/api/sellers/${sellerId}`);
+    const data = await response.json();
+    setSeller(data);
   };
 
-  const popularDishes = [
-    { 
-      id: 1,
-      name: 'Spicy Octopus', 
-      image: octoingred, 
-      rating: 96, 
-      reviewCount: 26, 
-      servings: '1 serving', 
-      price: 12.99, 
-      description: 'This is a very tasty and healthy dish. It is made with organic ingredients.'
-    },
-    { 
-      id: 2,
-      name: 'Korean Hotpot Stew', 
-      image: khotpot, 
-      rating: 96, 
-      reviewCount: 47, 
-      servings: '1-2 servings', 
-      price: 5.99, 
-      description: 'Soft and fluffy thin sliced briskets and noodles in Korean Pyogo Broth.'
-    },
-    { 
-      id: 3,
-      name: 'Palak Paneer', 
-      image: '/path/to/palak.jpg', 
-      rating: 95, 
-      reviewCount: 40, 
-      servings: '1 serving', 
-      price: 11.99, 
-      description: 'Creamy spinach curry with cubes of soft paneer cheese, a vegetarian favorite.'
-    },
-    { 
-      id: 4,
-      name: 'Shimla Mirch Aloo', 
-      image: '/path/to/aloo.jpg', 
-      rating: 95, 
-      reviewCount: 19, 
-      servings: '1 serving', 
-      price: 10.99, 
-      description: 'A flavorful combination of bell peppers and potatoes, seasoned with aromatic spices.'
-    },
-    { 
-      id: 5,
-      name: 'Tiffin Combo', 
-      image: '/path/to/tiffin.jpg', 
-      rating: 100, 
-      reviewCount: 21, 
-      servings: '1 serving', 
-      price: 15.99, 
-      description: 'A complete meal with a variety of dishes, perfect for a satisfying lunch or dinner.'
-    },
-  ];
+  const fetchPopularDishes = async (sellerId) => {
+    // Replace this with actual API call to your backend
+    const response = await fetch(`/api/sellers/${sellerId}/dishes`);
+    const data = await response.json();
+    setPopularDishes(data);
+  };
 
   const handleDishClick = (dish) => {
     setSelectedDish(dish);
@@ -85,18 +43,9 @@ const SellerPage = ({ addToCart }) => {
     handleClosePopup();
   };
 
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (selectedDish && !event.target.closest('.popup-content')) {
-        handleClosePopup();
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [selectedDish]);
+  if (!seller) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="seller-page">
