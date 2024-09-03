@@ -14,9 +14,11 @@ import SellerPage from './components/SellerPage';
 import Footer from './components/Footer';
 import Terms from './components/Terms';
 import Privacy from './components/Privacy';
+import SellerRegistration from './components/SellerRegistration';
 import './App.css';
 import Profile from './components/Profile';
 import { GoogleOAuthProvider } from '@react-oauth/google';
+
 
 function App() {
   const [showCart, setShowCart] = useState(false);
@@ -95,7 +97,7 @@ function App() {
               <Route path="/profile" element={<Profile />} />
               <Route path="/terms" element={<Terms />} />
               <Route path="/privacy" element={<Privacy />} />
-
+              <Route path="/register-seller" element={<SellerRegistration />} />
 
             </Routes>
             {showCart && (

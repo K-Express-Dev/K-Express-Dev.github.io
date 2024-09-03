@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { auth, db } from './firebase';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import ManagePopup from './ManagePopup';
+import { doc, getDoc, updateDoc, collection, addDoc, getDocs, deleteDoc } from 'firebase/firestore';
 import './Profile.css';
 
 function Profile() {
@@ -16,22 +15,30 @@ function Profile() {
   });
   const [sellerRequest, setSellerRequest] = useState(false);
   const [isSeller, setIsSeller] = useState(false);
-  const [showManagePopup, setShowManagePopup] = useState(false); // State to control popup visibility
+  const [showManagePopup, setShowManagePopup] = useState(false);
+  const [sellerInfoSubmitted, setSellerInfoSubmitted] = useState(false);
+  const [sellerItems, setSellerItems] = useState([]);
+  const [newItem, setNewItem] = useState({ name: '', price: '', description: '' });
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
       if (currentUser) {
         const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
         if (userDoc.exists()) {
-          setUser({ id: currentUser.uid, ...userDoc.data() });
+          const userData = userDoc.data();
+          setUser({ id: currentUser.uid, ...userData });
           setFormData({
-            displayName: userDoc.data().displayName || '',
-            bio: userDoc.data().bio || '',
-            favoriteCuisine: userDoc.data().favoriteCuisine || '',
-            phoneNumber: userDoc.data().phoneNumber || ''
+            displayName: userData.displayName || '',
+            bio: userData.bio || '',
+            favoriteCuisine: userData.favoriteCuisine || '',
+            phoneNumber: userData.phoneNumber || ''
           });
-          setSellerRequest(userDoc.data().sellerRequest || false);
-          setIsSeller(userDoc.data().seller || false);
+          setSellerRequest(userData.sellerRequest || false);
+          setIsSeller(userData.seller || false);
+          setSellerInfoSubmitted(!!userData.sellerInfo);
+          if (userData.seller) {
+            fetchSellerItems(currentUser.uid);
+          }
         }
       } else {
         setUser(null);
@@ -40,6 +47,13 @@ function Profile() {
     });
     return () => unsubscribe();
   }, []);
+
+  const fetchSellerItems = async (userId) => {
+    const itemsCollection = collection(db, 'users', userId, 'items');
+    const itemsSnapshot = await getDocs(itemsCollection);
+    const itemsList = itemsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    setSellerItems(itemsList);
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -77,6 +91,132 @@ function Profile() {
   const handleClosePopup = () => {
     setShowManagePopup(false);
   };
+
+  const handleNewItemChange = (e) => {
+    const { name, value } = e.target;
+    setNewItem({ ...newItem, [name]: value });
+  };
+
+  const handleAddItem = async (e) => {
+    e.preventDefault();
+    try {
+      const itemsCollection = collection(db, 'users', user.id, 'items');
+      await addDoc(itemsCollection, newItem);
+      setNewItem({ name: '', price: '', description: '' });
+      fetchSellerItems(user.id);
+    } catch (error) {
+      console.error('Error adding new item:', error);
+    }
+  };
+
+  const handleDeleteItem = async (itemId) => {
+    try {
+      await deleteDoc(doc(db, 'users', user.id, 'items', itemId));
+      fetchSellerItems(user.id);
+    } catch (error) {
+      console.error('Error deleting item:', error);
+    }
+  };
+
+  const SellerRegistration = () => {
+    const [sellerData, setSellerData] = useState({
+      businessName: '',
+      description: '',
+      cuisineTypes: '',
+    });
+
+    const handleSellerDataChange = (e) => {
+      const { name, value } = e.target;
+      setSellerData({ ...sellerData, [name]: value });
+    };
+
+    const handleSellerSubmit = async (e) => {
+      e.preventDefault();
+      try {
+        await updateDoc(doc(db, 'users', user.id), {
+          sellerInfo: {
+            ...sellerData,
+            cuisineTypes: sellerData.cuisineTypes.split(',').map(type => type.trim()),
+          }
+        });
+        setSellerInfoSubmitted(true);
+        alert('Seller information submitted successfully!');
+      } catch (error) {
+        console.error('Error submitting seller information:', error);
+      }
+    };
+
+    return (
+      <form onSubmit={handleSellerSubmit} className="seller-registration-form">
+        <input
+          type="text"
+          name="businessName"
+          value={sellerData.businessName}
+          onChange={handleSellerDataChange}
+          placeholder="Business Name"
+          required
+        />
+        <textarea
+          name="description"
+          value={sellerData.description}
+          onChange={handleSellerDataChange}
+          placeholder="Business Description"
+          required
+        ></textarea>
+        <input
+          type="text"
+          name="cuisineTypes"
+          value={sellerData.cuisineTypes}
+          onChange={handleSellerDataChange}
+          placeholder="Cuisine Types (comma-separated)"
+          required
+        />
+        <button type="submit">Submit Seller Information</button>
+      </form>
+    );
+  };
+
+  const ManageItems = () => (
+    <div className="manage-items">
+      <h3>Manage Items</h3>
+      <form onSubmit={handleAddItem}>
+        <input
+          type="text"
+          name="name"
+          value={newItem.name}
+          onChange={handleNewItemChange}
+          placeholder="Item Name"
+          required
+        />
+        <input
+          type="number"
+          name="price"
+          value={newItem.price}
+          onChange={handleNewItemChange}
+          placeholder="Price"
+          required
+        />
+        <textarea
+          name="description"
+          value={newItem.description}
+          onChange={handleNewItemChange}
+          placeholder="Description"
+          required
+        ></textarea>
+        <button type="submit">Add Item</button>
+      </form>
+      <div className="items-list">
+        {sellerItems.map((item) => (
+          <div key={item.id} className="item">
+            <h4>{item.name}</h4>
+            <p>Price: ${item.price}</p>
+            <p>{item.description}</p>
+            <button onClick={() => handleDeleteItem(item.id)}>Delete</button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 
   if (loading) {
     return <div className="profile-container"><div className="loader"></div></div>;
@@ -142,15 +282,30 @@ function Profile() {
           <p><strong>Bio:</strong> {user.bio || 'No bio available'}</p>
           <p><strong>Favorite Cuisine:</strong> {user.favoriteCuisine || 'Not specified'}</p>
           <p><strong>Phone Number:</strong> {user.phoneNumber || 'Not provided'}</p>
-          {!sellerRequest && (
+          {!sellerRequest && !isSeller && (
             <button onClick={handleSellerRequest} className="seller-request-button">Request to be a Seller</button>
           )}
           {sellerRequest && !isSeller && <p>Your request to be a seller has been submitted and awaits approval.</p>}
-          {isSeller && sellerRequest && <button onClick={handleManageClick} className="manage-button">Manage</button>}
+          {isSeller && sellerInfoSubmitted && <button onClick={handleManageClick} className="manage-button">Manage Items</button>}
           <button onClick={() => setEditing(true)} className="edit-button">Edit Profile</button>
         </div>
       )}
-      {showManagePopup && <ManagePopup onClose={handleClosePopup} />}
+      
+      {isSeller && !sellerInfoSubmitted && (
+        <div className="seller-registration-section">
+          <h2>Complete Your Seller Profile</h2>
+          <SellerRegistration />
+        </div>
+      )}
+      
+      {showManagePopup && (
+        <div className="popup">
+          <div className="popup-content">
+            <span className="close" onClick={handleClosePopup}>&times;</span>
+            <ManageItems />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
