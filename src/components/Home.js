@@ -3,46 +3,41 @@ import { Link } from 'react-router-dom';
 import SellerBox from './SellerBox';
 import './Home.css';
 import spicyOctopusImage from './images/spicy_octopus.jpeg';
-
+import koreanbbq from './images/koreanbbq.jpg'
+import italian from './images/italianfood.jpg'
+import mexican from './images/mexican.jpg'
+import japan from './images/japan.jpg'
 
 const Home = () => {
   const sellers = [
     {
       id: 1,
-      image: spicyOctopusImage,
-      title: 'Korean BBQ Meals',
+      image: koreanbbq,
+      title: 'Korean Meals',
       seller: 'First Last',
       locations: ['Irvine, CA'],
       days: ['Wednesday', 'Saturday'],
     },
     {
       id: 2,
-      image: '/path/to/stew-soup-image1.jpg',
-      title: 'Stew & Soup Meals',
+      image: italian,
+      title: 'Italian Pasta',
       seller: 'First Last',
       locations: ['San Diego, CA' , 'Anaheim, CA'],
       days: ['Wednesday', 'Friday'],
     },
     {
       id: 3,
-      image: '/path/to/stew-soup-image2.jpg',
-      title: 'Stew & Soup Meals',
+      image: mexican,
+      title: 'Mexican Food',
       seller: 'First Last',
       locations: ['San Diego, CA'],
       days: ['Wednesday', 'Friday'],
     },
     {
       id: 4,
-      image: '/path/to/stew-soup-image2.jpg',
-      title: 'Stew & Soup Meals',
-      seller: 'First Last',
-      locations: ['San Diego, CA'],
-      days: ['Wednesday', 'Friday'],
-    },
-    {
-      id: 5,
-      image: '/path/to/stew-soup-image2.jpg',
-      title: 'Stew & Soup Meals',
+      image: japan,
+      title: 'Japanese Bento',
       seller: 'First Last',
       locations: ['San Diego, CA'],
       days: ['Wednesday', 'Friday'],
@@ -63,7 +58,7 @@ const Home = () => {
     <div className="home">
       <div className="hero">
         <div className="hero-content">
-          <h1>Freshly Made, Local Korean Food</h1>
+          <h1>Freshly Made, Local Cuisines</h1>
           <div className="location-selector">
             <i className="fas fa-map-marker-alt"></i>
             <select value={selectedLocation} onChange={handleLocationChange}>
